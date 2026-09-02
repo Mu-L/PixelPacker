@@ -25,18 +25,26 @@ public class PixelPacker {
     private int type_Suffix = 1;
 
     private String lineSeparator = System.lineSeparator();
-    private String suffix_Json = ".json";
-    private String suffix_Png = ".png";
-    private String suffix_Pack = "_pack_";
-    private String suffix_Unpack = "_unpack_";
-    private String suffix_Polygon = "polygon_";
-    private String suffix_Polygon_Non = "polygon_non_";
-    private String suffix_Properties = "properties_";
-    private String suffix_Xml = ".xml";
-    private String tag_comment = "sprite pack";
-    private String tag_encoding = "utf-8";
-    private String tag_path = "path";
-    private String tag_png = "png";
+    private String sign_comment = "sprite pack";
+    private String sign_encoding = "utf-8";
+    private String sign_png = "png";
+
+    public String suffix_Json = ".json";
+    public String suffix_Png = ".png";
+    public String suffix_Pack = "_pack_";
+    public String suffix_Unpack = "_unpack_";
+    public String suffix_Polygon = "polygon_";
+    public String suffix_Polygon_Non = "polygon_non_";
+    public String suffix_Properties = "properties_";
+    public String suffix_Xml = ".xml";
+
+    public String tag_bounds_x = PixelSheet.tag_bounds_x;
+    public String tag_bounds_y = PixelSheet.tag_bounds_y;
+    public String tag_bounds_width = PixelSheet.tag_bounds_width;
+    public String tag_bounds_height = PixelSheet.tag_bounds_height;
+    public String tag_name = "name";
+    public String tag_path = "path";
+    public String tag_shape = "shape";
 
     private PixelSheet pixelSheet = new PixelSheet();
 
@@ -51,8 +59,7 @@ public class PixelPacker {
                     stringBuilder.append(lineSeparator);
                 }
                 reader.close();
-                string = stringBuilder.toString();
-                return string;
+                return stringBuilder.toString();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -69,7 +76,14 @@ public class PixelPacker {
         String string = readString(file);
         JsonUtils jsonUtils = new JsonUtils();
         JsonObject jsonObject = jsonUtils.parseJsonObject(string);
-        return toProperties(jsonObject);
+        Properties properties = toProperties(jsonObject);
+        if (null == properties.get(tag_path)) {
+            File dirFile = file.getParentFile();
+            File imageFile = new File(dirFile, getPrefix(file.getName()) + suffix_Png);
+            String imagePath = imageFile.getAbsolutePath();
+            properties.put(tag_path, imagePath);
+        }
+        return properties;
     }
 
     private Properties readXML(File file) {
@@ -83,24 +97,21 @@ public class PixelPacker {
     }
 
     private Properties toProperties(JsonObject jsonObject) {
-        Properties properties = null;
         if (null != jsonObject) {
-            properties = new Properties();
+            Properties properties = new Properties();
             Properties prop = jsonObject.get();
             Set<Object> kset = prop.keySet();
             for (Iterator<Object> iterator = kset.iterator(); iterator.hasNext(); ) {
                 Object key = iterator.next();
                 Object value = prop.get(key);
                 if (value instanceof JsonObject) {
-                    properties.put(key, toProperties((JsonObject) value));
-                } else if (value instanceof Properties) {
-                    properties.put(key, value);
-                } else {
-                    properties.put(key, value);
+                    value = toProperties((JsonObject) value);
                 }
+                properties.put(key, value);
             }
+            return properties;
         }
-        return properties;
+        return null;
     }
 
     private void writeString(String string, File file) {
@@ -133,7 +144,7 @@ public class PixelPacker {
     private void writeXML(Properties properties, File file) {
         if (null != properties && null != file) {
             try {
-                properties.storeToXML(Files.newOutputStream(file.toPath()), tag_comment, tag_encoding);
+                properties.storeToXML(Files.newOutputStream(file.toPath()), sign_comment, sign_encoding);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -158,7 +169,7 @@ public class PixelPacker {
         return jsonObject;
     }
 
-    private BufferedImage read(File file) {
+    public BufferedImage read(File file) {
         try {
             return ImageIO.read(file);
         } catch (IOException e) {
@@ -166,23 +177,23 @@ public class PixelPacker {
         }
     }
 
-    private void write(BufferedImage image, File file) {
+    public void write(BufferedImage image, File file) {
         if (null != image && null != file) {
             try {
-                ImageIO.write(image, tag_png, file);
+                ImageIO.write(image, sign_png, file);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private void write(BufferedImage image, String filePath) {
+    public void write(BufferedImage image, String filePath) {
         if (null != filePath) {
             write(image, new File(filePath));
         }
     }
 
-    private File newFile(File file, Object name, String suffix, boolean isSuffix) {
+    public File newFile(File file, Object name, String suffix, boolean isSuffix) {
         if (null != file && null != name && null != suffix) {
             File dirFile = file.getParentFile();
             if (null != dirFile) {
@@ -236,14 +247,33 @@ public class PixelPacker {
                 dirFile = file;
             }
             if (null != dirFile) {
-                BufferedImage image = pack(dirFile.listFiles(), x, y, width, height, lineSize, rowSize, lineWidth, rowHeight, isTrim);
+                File[] array = dirFile.listFiles();
+                BufferedImage image = pack(array, x, y, width, height, lineSize, rowSize, lineWidth, rowHeight, isTrim);
                 String info = suffix_Pack + x + y + width + height + lineSize + rowSize + lineWidth + rowHeight + isTrim;
-                pack(dirFile, image, pixelSheet.getPackProperties(), info);
+                Properties properties = pixelSheet.getPackProperties();
+                updateProperties(properties, array);
+                pack(dirFile, image, properties, info);
             }
         }
     }
 
-    private void pack(File dirFile, BufferedImage image, Properties properties, String info) {
+    private void updateProperties(Properties properties, File[] array) {
+        if (null != properties && null != array) {
+            for (int i = 0; i < array.length; i++) {
+                Object key = i;
+                Object value = properties.get(key);
+                if (null != value) {
+                    if (value instanceof Properties) {
+                        Properties prop = (Properties) value;
+                        prop.put(tag_name, array[i].getName());
+                        properties.put(key, value);
+                    }
+                }
+            }
+        }
+    }
+
+    public void pack(File dirFile, BufferedImage image, Properties properties, String info) {
         if (null != dirFile && null != image && null != info) {
             String path = dirFile.getAbsolutePath();
             String imagePath = path + info + suffix_Png;
@@ -270,18 +300,16 @@ public class PixelPacker {
                     return;
                 }
             }
-            if (null != imageFile) {
-                File dirFile;
-                if (imageFile.isFile()) {
-                    dirFile = imageFile.getParentFile();
-                } else {
-                    dirFile = imageFile;
-                }
-                if (null != dirFile) {
-                    String info = suffix_Pack + suffix_Properties + isTrim;
-                    BufferedImage image = pack(dirFile.listFiles(), properties, isTrim);
-                    pack(dirFile, image, null, info);
-                }
+            File dirFile;
+            if (imageFile.isFile()) {
+                dirFile = imageFile.getParentFile();
+            } else {
+                dirFile = imageFile;
+            }
+            if (null != dirFile) {
+                String info = suffix_Pack + suffix_Properties + isTrim;
+                BufferedImage image = pack(dirFile.listFiles(), properties, isTrim);
+                pack(dirFile, image, null, info);
             }
         } else {
             if (null != imageFile) {
@@ -400,7 +428,7 @@ public class PixelPacker {
         packPolygonTool(file, isTrim, true);
     }
 
-    private void packPolygonTool(File file, boolean isTrim, boolean isAlpha) {
+    public void packPolygonTool(File file, boolean isTrim, boolean isAlpha) {
         if (null != file) {
             File dirFile;
             if (file.isFile()) {
@@ -466,19 +494,28 @@ public class PixelPacker {
         }
     }
 
-    private void unpack(File file, ArrayList<BufferedImage> arrayList, Properties properties, String info) {
+    public void unpack(File file, ArrayList<BufferedImage> arrayList, Properties properties, String info) {
         if (null != file && null != arrayList && null != info) {
             int index = 0;
-            for (Iterator<BufferedImage> iterator = arrayList.iterator(); iterator.hasNext(); ) {
-                String name = info + "_" + index;
-                write(iterator.next(), newFile(file, name, suffix_Png, true));
+            for (int i = 0; i < arrayList.size(); i++) {
+                BufferedImage image = arrayList.get(i);
+                Object name = null;
+                if (null != properties) {
+                    Object value = properties.get(String.valueOf(i));
+                    if (null != value) {
+                        Properties prop = (Properties) value;
+                        name = prop.get(tag_name);
+                    }
+                }
+                File imageFile;
+                if (null == name) {
+                    name = info + "_" + index;
+                    imageFile = newFile(file, name, suffix_Png, true);
+                } else {
+                    imageFile = new File(file.getParentFile(), name.toString());
+                }
+                write(image, imageFile);
                 index++;
-            }
-            if (null != properties) {
-                File propFile = newFile(file, info, suffix_Json, true);
-                String path = file.getAbsolutePath();
-                properties.put(tag_path, path);
-                writeProperties(properties, propFile);
             }
         }
     }
@@ -499,7 +536,8 @@ public class PixelPacker {
             }
             String info = suffix_Unpack + suffix_Properties + isTrim;
             ArrayList<BufferedImage> arrayList = unpackList(read(imageFile), properties, isTrim);
-            unpack(imageFile, arrayList, null, info);
+//            unpack(imageFile, arrayList, null, info);
+            unpack(imageFile, arrayList, properties, info);
         }
     }
 
@@ -518,10 +556,13 @@ public class PixelPacker {
     private ArrayList<BufferedImage> unpackList(BufferedImage root, Properties properties, boolean isTrim) {
         if (null != root && null != properties) {
             ArrayList<BufferedImage> arrayList = new ArrayList<>();
-            Object key_ = properties.get("x");
-            if (null == key_) {
+            Object x = properties.get(tag_bounds_x);
+            Object y = properties.get(tag_bounds_y);
+            Object width = properties.get(tag_bounds_width);
+            Object height = properties.get(tag_bounds_height);
+            if (null == x || null == y || null == width || null == height) {
                 Set<Object> kset = properties.keySet();
-                for (Iterator iterator = kset.iterator(); iterator.hasNext(); ) {
+                for (Iterator<Object> iterator = kset.iterator(); iterator.hasNext(); ) {
                     Object key = iterator.next();
                     Object value = properties.get(key);
                     if (value instanceof Properties) {
@@ -542,26 +583,7 @@ public class PixelPacker {
         return null;
     }
 
-    public void unpackPolygon(File file, boolean isTrim) {
-        unpackPolygon(file, KeepSize, KeepSize, isTrim);
-    }
-
-    public void unpackPolygon(File file, int width, int height, boolean isTrim) {
-        if (null != file) {
-            BufferedImage image = read(file);
-            ArrayList<BufferedImage> arrayList = unpackPolygon(image, width, height, isTrim);
-            if (null != arrayList) {
-                String info = suffix_Unpack + width + height + isTrim;
-                unpack(file, arrayList, pixelSheet.getUnpackProperties(), info);
-            }
-        }
-    }
-
-    private ArrayList<BufferedImage> unpackPolygon(BufferedImage image, int width, int height, boolean isTrim) {
-        return pixelSheet.unpackPolygon(image, width, height, isTrim);
-    }
-
-    private BufferedImage[] toArray(ArrayList<BufferedImage> arrayList) {
+    public BufferedImage[] toArray(ArrayList<BufferedImage> arrayList) {
         if (null != arrayList) {
             BufferedImage[] array = new BufferedImage[arrayList.size()];
             arrayList.toArray(array);
