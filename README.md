@@ -134,8 +134,13 @@ packPolygon(file, false);
 packPolygonNon(file, false);
 ```
 
+不适用图块（镂空）：
+
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_non.png)
 
+适用图块：
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_non_1.png)
 
 <a id="method"></a>
 
