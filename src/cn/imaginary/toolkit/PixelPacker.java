@@ -418,17 +418,11 @@ public class PixelPacker {
         return pixelSheet.packPolygon(array, isTrim);
     }
 
-    public void packPolygonNon(String filePath, boolean isTrim) {
-        if (null != filePath) {
-            packPolygonNon(new File(filePath), isTrim);
-        }
-    }
-
     public void packPolygonNon(File file, boolean isTrim) {
         packPolygonTool(file, isTrim, true);
     }
 
-    public void packPolygonTool(File file, boolean isTrim, boolean isAlpha) {
+    private void packPolygonTool(File file, boolean isTrim, boolean isAlpha) {
         if (null != file) {
             File dirFile;
             if (file.isFile()) {
@@ -561,12 +555,13 @@ public class PixelPacker {
             Object width = properties.get(tag_bounds_width);
             Object height = properties.get(tag_bounds_height);
             if (null == x || null == y || null == width || null == height) {
-                Set<Object> kset = properties.keySet();
-                for (Iterator<Object> iterator = kset.iterator(); iterator.hasNext(); ) {
-                    Object key = iterator.next();
-                    Object value = properties.get(key);
-                    if (value instanceof Properties) {
-                        BufferedImage image = unpack(root, (Properties) value, isTrim);
+                for (int i = 0; i < properties.size(); i++) {
+                    Object object = properties.get(i);
+                    if (null == object) {
+                        object = properties.get(String.valueOf(i));
+                    }
+                    if (object instanceof Properties) {
+                        BufferedImage image = unpack(root, (Properties) object, isTrim);
                         if (null != image) {
                             arrayList.add(image);
                         }
