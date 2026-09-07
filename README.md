@@ -121,7 +121,7 @@ pack(file, 0, 0, -1, -1, 3, 3, 0, 0, true);
 
 5. pack polygon :
 
-* 5.1 packPolygon:
+* 5.1 packPolygon :
 * 5.2 packPolygonNon :
 
 ```java
@@ -142,6 +142,23 @@ packPolygonNon(file, false);
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_non_1.png)
 
+pack功能可按参数要求打包图片为图集png，并附带生成JSON文件来存储图片的信息，例如坐标、尺寸等等，方便跨软件对png图集进行解包操作。
+
+6. unpack :
+
+* 6.1 unpack :
+* 6.2 unpackNon :
+
+```java
+unpack(file, propFile, false);
+```
+
+```java
+unpackNon(file, propFile, false);
+```
+
+unpack功能适用于本项目产生的图集png，配合附带的JSON文件将png图集解包为多个图片。
+
 <a id="method"></a>
 
 ## 方法 （Method）：
@@ -151,7 +168,6 @@ packPolygonNon(file, false);
     * pack line
     * pack row
     * pack polygon
-    * pack polygon non
     * pack properties
 * <a href="#unpack-all">解包（Unpack）：</a>
     * unpack
@@ -192,6 +208,8 @@ packPolygonNon(file, false);
     * unpack polygon
 * <a href="#unpack-properties">解包集 （unpack properties）</a>
     * unpack properties
+        * unpack
+        * unpack non
 
 打包或解包所有的方法。
 
@@ -369,7 +387,7 @@ public void unpackPolygon(File file, boolean isTrim) {}
 public void unpackPolygon(File file, int width, int height, boolean isTrim) {}
 ```
 
-读取图片文件，解包图片中的非透明部分的像素块，然后分割并存储为多个图片。（暂不开放）
+读取图片文件，解包图片中的非透明部分的像素块，然后分割并存储为多个图片。（本功能代码暂不开源，若有需求可以向我申请使用，务必提供原图的版权拥有证明！）
 
 
 <a id="unpack-properties"></a>
@@ -383,7 +401,7 @@ public void unpack(File imageFile, File propFile, boolean isTrim) {}
 ```
 
 ```java
-public void unpack(File imageFile, Properties properties, boolean isTrim) {}
+public void unpackNon(File imageFile, File propFile, boolean isTrim) {}
 ```
 
 读取图片文件，按照配置信息解包图片，然后分割并存储为多个图片。
