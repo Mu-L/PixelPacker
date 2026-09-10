@@ -38,7 +38,8 @@ public class PixelPacker {
     public String tag_bounds_width = PixelSheet.tag_bounds_width;
     public String tag_bounds_height = PixelSheet.tag_bounds_height;
     public String tag_name = "name";
-    public String tag_path = "path";
+    public String tag_file = "file";
+    //    public String tag_path = "path";
     public String tag_shape = "shape";
 
     private PixelSheet pixelSheet = new PixelSheet();
@@ -71,14 +72,7 @@ public class PixelPacker {
         String string = readString(file);
         JsonUtils jsonUtils = new JsonUtils();
         JsonObject jsonObject = jsonUtils.parseJsonObject(string);
-        Properties properties = toProperties(jsonObject);
-        if (null == properties.get(tag_path)) {
-            File dirFile = file.getParentFile();
-            File imageFile = new File(dirFile, getPrefix(file.getName()) + suffix_Png);
-            String imagePath = imageFile.getAbsolutePath();
-            properties.put(tag_path, imagePath);
-        }
-        return properties;
+        return toProperties(jsonObject);
     }
 
     private Properties readXML(File file) {
@@ -269,7 +263,6 @@ public class PixelPacker {
             write(image, new File(imagePath));
             String propPath = path + info + suffix_Json;
             if (null != properties) {
-                properties.put(tag_path, path);
                 writeProperties(properties, new File(propPath));
             }
         }
@@ -282,12 +275,7 @@ public class PixelPacker {
     public void pack(File imageFile, Properties properties, boolean isTrim) {
         if (null != properties) {
             if (null == imageFile) {
-                Object path = properties.get(tag_path);
-                if (null != path) {
-                    imageFile = new File(path.toString());
-                } else {
-                    return;
-                }
+                return;
             }
             File dirFile;
             if (imageFile.isFile()) {
@@ -517,12 +505,7 @@ public class PixelPacker {
     private void unpack(File imageFile, Properties properties, boolean isTrim, boolean isAlpha) {
         if (null != properties) {
             if (null == imageFile) {
-                Object path = properties.get(tag_path);
-                if (null != path) {
-                    imageFile = new File(path.toString());
-                } else {
-                    return;
-                }
+                return;
             }
             String info = suffix_Unpack + suffix_Properties + isTrim;
             ArrayList<BufferedImage> arrayList = unpackList(read(imageFile), properties, isTrim, isAlpha);
@@ -539,39 +522,8 @@ public class PixelPacker {
         return pixelSheet.unpack(root, x, y, width, height, lineSize, rowSize, lineWidth, rowHeight, isTrim);
     }
 
-    private BufferedImage unpack(BufferedImage root, Properties properties, boolean isTrim, boolean isAlpha) {
-        return pixelSheet.unpack(root, properties, isTrim, isAlpha);
-    }
-
     private ArrayList<BufferedImage> unpackList(BufferedImage root, Properties properties, boolean isTrim, boolean isAlpha) {
-        if (null != root && null != properties) {
-            ArrayList<BufferedImage> arrayList = new ArrayList<>();
-            Object x = properties.get(tag_bounds_x);
-            Object y = properties.get(tag_bounds_y);
-            Object width = properties.get(tag_bounds_width);
-            Object height = properties.get(tag_bounds_height);
-            if (null == x || null == y || null == width || null == height) {
-                for (int i = 0; i < properties.size(); i++) {
-                    Object object = properties.get(i);
-                    if (null == object) {
-                        object = properties.get(String.valueOf(i));
-                    }
-                    if (object instanceof Properties) {
-                        BufferedImage image = unpack(root, (Properties) object, isTrim, isAlpha);
-                        if (null != image) {
-                            arrayList.add(image);
-                        }
-                    }
-                }
-            } else {
-                BufferedImage image = unpack(root, properties, isTrim, isAlpha);
-                if (null != image) {
-                    arrayList.add(image);
-                }
-            }
-            return arrayList;
-        }
-        return null;
+        return pixelSheet.unpackList(root, properties, isTrim, isAlpha);
     }
 
     public void unpackNon(File imageFile, File propFile, boolean isTrim) {
