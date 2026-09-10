@@ -1,6 +1,7 @@
 package cn.imaginary.toolkit.image;
 
 import java.awt.*;
+import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -396,20 +397,17 @@ public class PixelSheet {
                                 if (index < array.length) {
                                     BufferedImage image = array[index];
                                     if (null != image) {
-                                        Object x = prop.get(tag_bounds_x);
-                                        Object y = prop.get(tag_bounds_y);
-                                        Object width = prop.get(tag_bounds_width);
-                                        Object height = prop.get(tag_bounds_height);
-                                        if (null != x && null != y && null != width && null != height) {
-                                            int w = (int) width;
-                                            int h = (int) height;
+                                        Rectangle rectangle = getBounds(prop);
+                                        if (null != rectangle) {
+                                            int w = rectangle.width;
+                                            int h = rectangle.height;
                                             if (w_min < w) {
                                                 w_min = w;
                                             }
                                             if (h_min < h) {
                                                 h_min = h;
                                             }
-                                            drawImage(graphics2D, image, (int) x, (int) y, w, h, null);
+                                            drawImage(graphics2D, image, rectangle.x, rectangle.y, w, h, null);
                                         }
                                     }
                                 }
@@ -550,18 +548,122 @@ public class PixelSheet {
         }
     }
 
-    public BufferedImage unpack(BufferedImage root, Properties properties, boolean isTrim, boolean isAlpha) {
+    public ArrayList<BufferedImage> unpackList(BufferedImage root, Properties properties, boolean isTrim, boolean isAlpha) {
         if (null != root && null != properties) {
+            ArrayList<BufferedImage> arrayList = new ArrayList<>();
+            for (int i = 0; i < properties.size(); i++) {
+                BufferedImage image = unpack(root, properties, i, isTrim, isAlpha);
+                if (null != image) {
+                    arrayList.add(image);
+                }
+            }
+            return arrayList;
+        }
+        return null;
+    }
+
+    private BufferedImage unpack(BufferedImage root, Properties properties, int index, boolean isTrim, boolean isAlpha) {
+        if (null != root && null != properties) {
+            Rectangle r = getBounds(properties, index);
+            if (null != r) {
+                if (isAlpha) {
+                    ArrayList<Rectangle> arrayList = new ArrayList<>();
+                    for (int i = 0; i < properties.size(); i++) {
+                        Rectangle rectangle = getBounds(properties, i);
+                        if (null != rectangle) {
+                            arrayList.add(rectangle);
+                        }
+                    }
+                    Rectangle[] array = new Rectangle[arrayList.size()];
+                    arrayList.toArray(array);
+                    BufferedImage image = subtractImage(root, array, index);
+                    if (isTrim) {
+                        Rectangle rect = getTrimBounds(properties, index);
+                        image = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
+                    }
+                    return image;
+                }
+            }
+        }
+        return null;
+    }
+
+    private BufferedImage subtractImage(BufferedImage root, Rectangle[] array, int index) {
+        if (null != root && null != array) {
+            Rectangle rectangle = array[index];
+            Area area = new Area(rectangle);
+            for (int i = index + 1; i < array.length; i++) {
+                Rectangle rect = array[i];
+                Area a = new Area(rect);
+                area.subtract(a);
+            }
+            return drawImage(root, area, rectangle);
+        }
+        return null;
+    }
+
+    private BufferedImage drawImage(BufferedImage root, Area area, Rectangle rectangle) {
+        if (null != root && null != area && null != rectangle) {
+            int width = root.getWidth();
+            int height = root.getHeight();
+            int x = rectangle.x;
+            int y = rectangle.y;
+            BufferedImage image = new BufferedImage(rectangle.width, rectangle.height, BufferedImage.TYPE_INT_ARGB);
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    int x_ = i + x;
+                    int y_ = j + y;
+                    if (area.contains(x_, y_)) {
+                        image.setRGB(i, j, root.getRGB(x_, y_));
+                    }
+                }
+            }
+            return image;
+        }
+        return null;
+    }
+
+    private Rectangle getBounds(Properties properties, int index) {
+        if (null != properties) {
+            Object object = properties.get(index);
+            if (null == object) {
+                return getBounds((Properties) properties.get(String.valueOf(index)));
+            }
+        }
+        return null;
+    }
+
+    private Rectangle getBounds(Properties properties) {
+        if (null != properties) {
             Object x = properties.get(tag_bounds_x);
             Object y = properties.get(tag_bounds_y);
             Object width = properties.get(tag_bounds_width);
             Object height = properties.get(tag_bounds_height);
             if (null != x && null != y && null != width && null != height) {
-                BufferedImage image = unpack(root, (int) x, (int) y, (int) width, (int) height, false);
-                if (isAlpha) {
-                    image = trimImage(image, properties, isTrim);
-                }
-                return image;
+                return new Rectangle((int) x, (int) y, (int) width, (int) height);
+            }
+        }
+        return null;
+    }
+
+    private Rectangle getTrimBounds(Properties properties, int index) {
+        if (null != properties) {
+            Object object = properties.get(index);
+            if (null == object) {
+                return getTrimBounds((Properties) properties.get(String.valueOf(index)));
+            }
+        }
+        return null;
+    }
+
+    private Rectangle getTrimBounds(Properties properties) {
+        if (null != properties) {
+            Object left = properties.get(tag_bounds_left);
+            Object right = properties.get(tag_bounds_right);
+            Object top = properties.get(tag_bounds_top);
+            Object bottom = properties.get(tag_bounds_bottom);
+            if (null != left && null != right && null != top && null != bottom) {
+                return new Rectangle((int) left, (int) top, (int) right - (int) left, (int) bottom - (int) top);
             }
         }
         return null;
@@ -584,27 +686,6 @@ public class PixelSheet {
                 image = root;
             }
             return getSubImage(image, isTrim);
-        }
-        return null;
-    }
-
-    private BufferedImage trimImage(BufferedImage image, Properties properties, boolean isTrim) {
-        if (null != image && null != properties) {
-            int width = image.getWidth();
-            int height = image.getHeight();
-            Object left = properties.get(tag_bounds_left);
-            Object right = properties.get(tag_bounds_right);
-            Object top = properties.get(tag_bounds_top);
-            Object bottom = properties.get(tag_bounds_bottom);
-            if (null != left && null != right && null != top && null != bottom) {
-                image = image.getSubimage((int) left, (int) top, (int) right - (int) left, (int) bottom - (int) top);
-                if (!isTrim) {
-                    BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                    drawImage(img, image, (int) left, (int) top);
-                    image = img;
-                }
-                return image;
-            }
         }
         return null;
     }
