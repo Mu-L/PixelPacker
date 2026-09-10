@@ -134,15 +134,21 @@ packPolygon(file, false);
 packPolygonNon(file, false);
 ```
 
-不适用图块（镂空）：
+以下情况适合packPolygonNon紧凑打包：
+
+1.镂空图块：
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_non.png)
 
-适用图块：
+2.多边形图块：
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_non_1.png)
 
-pack功能可按参数要求打包图片为图集png，并附带生成JSON文件来存储图片的信息，例如坐标、尺寸等等，方便跨软件对png图集进行解包操作。
+pack功能可按参数要求打包图片为图集png。
+
+packPolygon和packPolygonNon属于图块紧凑打包，前者按尺寸按顺序紧凑打包，后者查找像素透明空间紧凑打包。
+
+打包功能附带生成JSON文件来存储图片的信息，例如坐标、尺寸等等，方便跨平台对png图集进行解包操作。
 
 6. unpack :
 
@@ -153,11 +159,13 @@ pack功能可按参数要求打包图片为图集png，并附带生成JSON文件
 unpack(file, propFile, false);
 ```
 
+unpack功能适用于pack和packPolygon产生的图集png解包。
+
 ```java
 unpackNon(file, propFile, false);
 ```
 
-unpack功能适用于本项目产生的图集png，配合附带的JSON文件将png图集解包为多个图片。
+unpackNon功能适用于packPolygonNon产生的图集png解包。
 
 <a id="method"></a>
 
