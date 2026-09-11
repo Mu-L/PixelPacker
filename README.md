@@ -180,13 +180,13 @@ packPolygon和packPolygonNon属于图块紧凑打包，前者按尺寸按顺序�
 unpack(file, propFile, false);
 ```
 
-unpack功能适用于pack和packPolygon产生的图集png解包。
+unpack功能适用于pack和packPolygon产生的图集png解包（仍旧可用，但已被unpackNon替代）。
 
 ```java
 unpackNon(file, propFile, false);
 ```
 
-unpackNon功能适用于packPolygonNon产生的图集png解包。
+unpackNon功能适用于pack，packPolygon和packPolygonNon产生的图集png解包。
 
 <a id="method"></a>
 
