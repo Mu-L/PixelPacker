@@ -34,6 +34,27 @@ Pack and Unpack images for the Sprite sheets.
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/PixelPacker_Info.png)
 
+### 功能特性（News）：
+* pack line:
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_line.png)
+
+* pack max size:
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_max_size.png)
+
+* pack polygon:
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon.png)
+
+* pack non:
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_non.png)
+
+* unpack polygon
+
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_unpack_polygon.png)
+
 
 <a id="about-the-support"></a>
 
