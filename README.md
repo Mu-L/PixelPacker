@@ -51,7 +51,7 @@ Pack and Unpack images for the Sprite sheets.
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_non.png)
 
-* unpack polygon
+* unpack polygon:
 
 ![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_unpack_polygon.png)
 
@@ -149,7 +149,7 @@ pack(file, 0, 0, -1, -1, 3, 3, 0, 0, true);
 packPolygon(file, false);
 ```
 
-![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon.png)
+![image](https://github.com/neverever1533/PixelPacker/blob/main/sheets_pack_polygon_1.png)
 
 ```java
 packPolygonNon(file, false);
