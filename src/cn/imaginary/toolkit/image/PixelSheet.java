@@ -567,23 +567,42 @@ public class PixelSheet {
             Rectangle r = getBounds(properties, index);
             if (null != r) {
                 if (isAlpha) {
-                    ArrayList<Rectangle> arrayList = new ArrayList<>();
-                    for (int i = 0; i < properties.size(); i++) {
-                        Rectangle rectangle = getBounds(properties, i);
-                        if (null != rectangle) {
-                            arrayList.add(rectangle);
-                        }
-                    }
-                    Rectangle[] array = new Rectangle[arrayList.size()];
-                    arrayList.toArray(array);
-                    BufferedImage image = subtractImage(root, array, index);
-                    if (isTrim) {
-                        Rectangle rect = getTrimBounds(properties, index);
-                        image = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
-                    }
-                    return image;
+                    return unpackNon(root, properties, index, isTrim);
+                } else {
+                    return unpack(root, properties, index, isTrim);
                 }
             }
+        }
+        return null;
+    }
+
+    private BufferedImage unpack(BufferedImage root, Properties properties, int index, boolean isTrim) {
+        if (null != root && null != properties) {
+            Rectangle rectangle = getBounds(properties, index);
+            if (null != rectangle) {
+                return unpack(root, rectangle.x, rectangle.y, rectangle.width, rectangle.height, isTrim);
+            }
+        }
+        return null;
+    }
+
+    private BufferedImage unpackNon(BufferedImage root, Properties properties, int index, boolean isTrim) {
+        if (null != root && null != properties) {
+            ArrayList<Rectangle> arrayList = new ArrayList<>();
+            for (int i = 0; i < properties.size(); i++) {
+                Rectangle rectangle = getBounds(properties, i);
+                if (null != rectangle) {
+                    arrayList.add(rectangle);
+                }
+            }
+            Rectangle[] array = new Rectangle[arrayList.size()];
+            arrayList.toArray(array);
+            BufferedImage image = subtractImage(root, array, index);
+            if (isTrim) {
+                Rectangle rect = getTrimBounds(properties, index);
+                image = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
+            }
+            return image;
         }
         return null;
     }
