@@ -494,10 +494,12 @@ public class PixelPacker {
         }
     }
 
+    @Deprecated
     public void unpack(File imageFile, File propFile, boolean isTrim) {
         unpack(imageFile, readProperties(propFile), isTrim);
     }
 
+    @Deprecated
     public void unpack(File imageFile, Properties properties, boolean isTrim) {
         unpack(imageFile, properties, isTrim, false);
     }
