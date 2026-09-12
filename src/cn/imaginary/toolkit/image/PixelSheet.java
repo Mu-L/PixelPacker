@@ -642,17 +642,20 @@ public class PixelSheet {
         return null;
     }
 
-    private Rectangle getBounds(Properties properties, int index) {
+    public Rectangle getBounds(Properties properties, int index) {
         if (null != properties) {
             Object object = properties.get(index);
             if (null == object) {
-                return getBounds((Properties) properties.get(String.valueOf(index)));
+                object = properties.get(String.valueOf(index));
+            }
+            if (object instanceof Properties) {
+                return getBounds((Properties) object);
             }
         }
         return null;
     }
 
-    private Rectangle getBounds(Properties properties) {
+    public Rectangle getBounds(Properties properties) {
         if (null != properties) {
             Object x = properties.get(tag_bounds_x);
             Object y = properties.get(tag_bounds_y);
@@ -665,17 +668,20 @@ public class PixelSheet {
         return null;
     }
 
-    private Rectangle getTrimBounds(Properties properties, int index) {
+    public Rectangle getTrimBounds(Properties properties, int index) {
         if (null != properties) {
             Object object = properties.get(index);
             if (null == object) {
-                return getTrimBounds((Properties) properties.get(String.valueOf(index)));
+                object = properties.get(String.valueOf(index));
+            }
+            if (object instanceof Properties) {
+                return getTrimBounds((Properties) object);
             }
         }
         return null;
     }
 
-    private Rectangle getTrimBounds(Properties properties) {
+    public Rectangle getTrimBounds(Properties properties) {
         if (null != properties) {
             Object left = properties.get(tag_bounds_left);
             Object right = properties.get(tag_bounds_right);
