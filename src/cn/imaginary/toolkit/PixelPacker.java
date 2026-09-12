@@ -4,6 +4,7 @@ import cn.imaginary.toolkit.image.PixelSheet;
 import cn.imaginary.toolkit.json.JsonObject;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
@@ -37,10 +38,16 @@ public class PixelPacker {
     public String tag_bounds_y = PixelSheet.tag_bounds_y;
     public String tag_bounds_width = PixelSheet.tag_bounds_width;
     public String tag_bounds_height = PixelSheet.tag_bounds_height;
+    public String tag_bounds_left = PixelSheet.tag_bounds_left;
+    public String tag_bounds_right = PixelSheet.tag_bounds_right;
+    public String tag_bounds_top = PixelSheet.tag_bounds_top;
+    public String tag_bounds_bottom = PixelSheet.tag_bounds_bottom;
     public String tag_name = "name";
     public String tag_file = "file";
     //    public String tag_path = "path";
     public String tag_shape = "shape";
+    public String tag_trims = "trims";
+    public String tag_bounds = "bounds";
 
     private PixelSheet pixelSheet = new PixelSheet();
 
@@ -72,7 +79,10 @@ public class PixelPacker {
         String string = readString(file);
         JsonUtils jsonUtils = new JsonUtils();
         JsonObject jsonObject = jsonUtils.parseJsonObject(string);
-        return toProperties(jsonObject);
+        Properties properties = toProperties(jsonObject);
+        properties = format(properties);
+//        System.out.println("read properties:" + properties);
+        return properties;
     }
 
     private Properties readXML(File file) {
@@ -117,9 +127,106 @@ public class PixelPacker {
     }
 
     private void writeProperties(Properties properties, File file) {
-//        System.out.println("properties: " + properties);
+        properties = formatInfo(properties);
+//        System.out.println("write properties: " + properties);
         writeJson(properties, file);
 //        writeXML(properties, file);
+    }
+
+    private Properties format(Properties properties) {
+        if (null != properties) {
+            Properties prop = new Properties();
+            for (int i = 0; i < properties.size(); i++) {
+                Object object = properties.get(i);
+                if (null == object) {
+                    object = properties.get(String.valueOf(i));
+                }
+                if (object instanceof Properties) {
+                    Properties p_info = (Properties) object;
+                    Properties p = new Properties();
+                    Object obj = p_info.get(tag_bounds);
+                    if (obj instanceof Properties) {
+                        Properties p_bounds = (Properties) obj;
+                        Rectangle bounds = pixelSheet.getBounds(p_bounds);
+                        if (null != bounds) {
+                            p.put(tag_bounds_x, bounds.x);
+                            p.put(tag_bounds_y, bounds.y);
+                            p.put(tag_bounds_width, bounds.width);
+                            p.put(tag_bounds_height, bounds.height);
+                        }
+                    } else {
+                        return properties;
+                    }
+                    obj = p_info.get(tag_trims);
+                    if (obj instanceof Properties) {
+                        Properties p_trims = (Properties) obj;
+                        Rectangle trims = pixelSheet.getTrimBounds(p_trims);
+                        if (null != trims) {
+                            p.put(tag_bounds_left, trims.x);
+                            p.put(tag_bounds_right, trims.x + trims.width);
+                            p.put(tag_bounds_top, trims.y);
+                            p.put(tag_bounds_bottom, trims.y + trims.height);
+                        }
+                    }
+                    obj = p_info.get(tag_name);
+                    if (null != obj) {
+                        p.put(tag_name, obj);
+                    }
+                    if (!p.isEmpty()) {
+                        prop.put(i, p);
+                    }
+                }
+            }
+            if (!prop.isEmpty()) {
+                return prop;
+            }
+        }
+        return null;
+    }
+
+    private Properties formatInfo(Properties properties) {
+        if (null != properties) {
+            Properties prop = new Properties();
+            for (int i = 0; i < properties.size(); i++) {
+                Object object = properties.get(i);
+                if (null == object) {
+                    object = properties.get(String.valueOf(i));
+                }
+                if (object instanceof Properties) {
+                    Properties p = (Properties) object;
+                    Properties p_info = new Properties();
+                    Rectangle bounds = pixelSheet.getBounds(p);
+                    if (null != bounds) {
+                        Properties p_bounds = new Properties();
+                        p_bounds.put(tag_bounds_x, bounds.x);
+                        p_bounds.put(tag_bounds_y, bounds.y);
+                        p_bounds.put(tag_bounds_width, bounds.width);
+                        p_bounds.put(tag_bounds_height, bounds.height);
+                        p_info.put(tag_bounds, p_bounds);
+                    }
+                    Rectangle trims = pixelSheet.getTrimBounds(p);
+                    if (null != trims) {
+                        Properties p_trims = new Properties();
+                        p_trims.put(tag_bounds_left, trims.x);
+                        p_trims.put(tag_bounds_right, trims.x + trims.width);
+                        p_trims.put(tag_bounds_top, trims.y);
+                        p_trims.put(tag_bounds_bottom, trims.y + trims.height);
+                        p_info.put(tag_trims, p_trims);
+                    }
+                    Object obj = p.get(tag_name);
+                    if (null != obj) {
+                        p_info.put(tag_name, obj);
+                    }
+                    if (!p_info.isEmpty()) {
+                        prop.put(i, p_info);
+                    }
+                }
+            }
+            if (!prop.isEmpty()) {
+                return prop;
+            }
+        }
+        return null;
     }
 
     private void writeJson(Properties properties, File file) {
@@ -475,9 +582,12 @@ public class PixelPacker {
                 BufferedImage image = arrayList.get(i);
                 Object name = null;
                 if (null != properties) {
-                    Object value = properties.get(String.valueOf(i));
-                    if (null != value) {
-                        Properties prop = (Properties) value;
+                    Object object = properties.get(i);
+                    if (null == object) {
+                        object = properties.get(String.valueOf(i));
+                    }
+                    if (object instanceof Properties) {
+                        Properties prop = (Properties) object;
                         name = prop.get(tag_name);
                     }
                 }
@@ -494,12 +604,10 @@ public class PixelPacker {
         }
     }
 
-    @Deprecated
     public void unpack(File imageFile, File propFile, boolean isTrim) {
         unpack(imageFile, readProperties(propFile), isTrim);
     }
 
-    @Deprecated
     public void unpack(File imageFile, Properties properties, boolean isTrim) {
         unpack(imageFile, properties, isTrim, false);
     }
