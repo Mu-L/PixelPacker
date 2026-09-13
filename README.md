@@ -89,7 +89,7 @@ Pack and Unpack images for the Sprite sheets.
     "1":{
         "name":"name2",
         "bounds":{
-            "x":10,
+            "x":0,
             "y":10,
             "width":8,
             "height":8
@@ -121,7 +121,7 @@ Pack and Unpack images for the Sprite sheets.
     },
     "1":{
         "name":"name2",
-        "x":10,
+        "x":0,
         "y":10,
         "width":8,
         "height":8,
