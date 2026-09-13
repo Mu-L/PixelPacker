@@ -627,13 +627,17 @@ public class PixelSheet {
             int height = root.getHeight();
             int x = rectangle.x;
             int y = rectangle.y;
-            BufferedImage image = new BufferedImage(rectangle.width, rectangle.height, BufferedImage.TYPE_INT_ARGB);
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
+            int w = rectangle.width;
+            int h = rectangle.height;
+            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
                     int x_ = i + x;
                     int y_ = j + y;
                     if (area.contains(x_, y_)) {
-                        image.setRGB(i, j, root.getRGB(x_, y_));
+                        if (x < width && y_ < height) {
+                            image.setRGB(i, j, root.getRGB(x_, y_));
+                        }
                     }
                 }
             }
