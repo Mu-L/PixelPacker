@@ -616,12 +616,26 @@ public class PixelSheet {
                 Area a = new Area(rect);
                 area.subtract(a);
             }
+//            return drawRGB(root, area, rectangle);
             return drawImage(root, area, rectangle);
         }
         return null;
     }
 
     private BufferedImage drawImage(BufferedImage root, Area area, Rectangle rectangle) {
+        if (null != root && null != area && null != rectangle) {
+            BufferedImage image = new BufferedImage(root.getWidth(), root.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics2D = image.createGraphics();
+            graphics2D.setClip(area);
+            graphics2D.drawImage(root, 0, 0, null);
+            graphics2D.dispose();
+            image = unpack(image, rectangle.x, rectangle.y, rectangle.width, rectangle.height, false);
+            return image;
+        }
+        return null;
+    }
+
+    private BufferedImage drawRGB(BufferedImage root, Area area, Rectangle rectangle) {
         if (null != root && null != area && null != rectangle) {
             int width = root.getWidth();
             int height = root.getHeight();
