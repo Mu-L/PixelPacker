@@ -42,12 +42,11 @@ public class PixelPacker {
     public String tag_bounds_right = PixelSheet.tag_bounds_right;
     public String tag_bounds_top = PixelSheet.tag_bounds_top;
     public String tag_bounds_bottom = PixelSheet.tag_bounds_bottom;
-    public String tag_name = "name";
-    public String tag_file = "file";
-    //    public String tag_path = "path";
-    public String tag_shape = "shape";
     public String tag_trims = "trims";
     public String tag_bounds = "bounds";
+    public String tag_name = "name";
+    public String tag_file = "file";
+    public String tag_shape = "shape";
 
     private PixelSheet pixelSheet = new PixelSheet();
 
@@ -355,7 +354,7 @@ public class PixelPacker {
                 if (null != value) {
                     if (value instanceof Properties) {
                         Properties prop = (Properties) value;
-                        prop.put(tag_name, array[i].getName());
+                        prop.put(tag_name, getPrefix(array[i].getName()));
                         properties.put(key, value);
                     }
                 }
@@ -596,7 +595,7 @@ public class PixelPacker {
                     name = info + "_" + index;
                     imageFile = newFile(file, name, suffix_Png, true);
                 } else {
-                    imageFile = new File(file.getParentFile(), name.toString());
+                    imageFile = new File(file.getParentFile(), name.toString() + suffix_Png);
                 }
                 write(image, imageFile);
                 index++;
