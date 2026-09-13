@@ -65,6 +65,77 @@ Pack and Unpack images for the Sprite sheets.
 
 支持透明通道的png图片，用于存储图片路径，以及记录坐标尺寸的json文件。psd或其他打包软件文件待支持。
 
+### 信息存储 （JSON）：
+
+基础格式：
+
+```json
+{
+    "0":{
+        "name":"name1",
+        "bounds":{
+            "x":0,
+            "y":0,
+            "width":8,
+            "height":8
+        },
+        "trims":{
+            "left":2,
+            "right":6,
+            "top":2,
+            "bottom":6
+        }
+    },
+    "1":{
+        "name":"name2",
+        "bounds":{
+            "x":10,
+            "y":10,
+            "width":8,
+            "height":8
+        },
+        "trims":{
+            "left":2,
+            "right":6,
+            "top":2,
+            "bottom":6
+        }
+    }
+}
+```
+
+或（旧版）
+
+```json
+{
+    "0":{
+        "name":"name1",
+        "x":0,
+        "y":0,
+        "width":8,
+        "height":8,
+        "left":2,
+        "right":6,
+        "top":2,
+        "bottom":6
+    },
+    "1":{
+        "name":"name2",
+        "x":10,
+        "y":10,
+        "width":8,
+        "height":8,
+        "left":2,
+        "right":6,
+        "top":2,
+        "bottom":6
+    }
+}
+```
+
+现存储格式均为第一种，读取时也支持第二种。
+
+
 <a id="about-the-item"></a>
 
 ## 参数说明（About The Item）：
