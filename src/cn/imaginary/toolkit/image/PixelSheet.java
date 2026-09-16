@@ -3,10 +3,7 @@ package cn.imaginary.toolkit.image;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class PixelSheet {
     public static String tag_bounds_x = "x";
@@ -17,9 +14,29 @@ public class PixelSheet {
     public static String tag_bounds_right = "right";
     public static String tag_bounds_top = "top";
     public static String tag_bounds_bottom = "bottom";
+    public static String tag_shape = "shape";
+
+    public static int Area_Style_RGB = 0;
+    public static int Area_Style_Subtract = 1;
+    public static int Area_Style_Shape = 2;
+
+    private final int[] styles = {Area_Style_RGB, Area_Style_Subtract, Area_Style_Shape};
+
+    private int area_style = 1;
 
     private Properties properties_pack;
     private Properties properties_unpack;
+
+    public void setCheckStyle(int areaStyle) {
+        area_style = areaStyle;
+    }
+
+    public int getCheckStyle() {
+        if (area_style >= 0 && area_style < styles.length) {
+            return styles[area_style];
+        }
+        return Area_Style_Subtract;
+    }
 
     public Properties getPackProperties() {
         return properties_pack;
@@ -357,6 +374,7 @@ public class PixelSheet {
             properties.put(tag_bounds_width, image.getWidth());
             properties.put(tag_bounds_height, image.getHeight());
             updatePackProperties(properties, image);
+            updatePackProperties(properties, image, getCheckStyle());
         }
     }
 
@@ -368,6 +386,9 @@ public class PixelSheet {
             properties.put(tag_bounds_top, bounds[1]);
             properties.put(tag_bounds_bottom, bounds[1] + bounds[3]);
         }
+    }
+
+    private void updatePackProperties(Properties properties, BufferedImage image, int areaStyle) {
     }
 
     public BufferedImage pack(BufferedImage[] array, Properties properties, boolean isTrim) {
@@ -415,7 +436,7 @@ public class PixelSheet {
                         }
                     }
                     graphics2D.dispose();
-                    return getSubImage(root, w_min, h_min);//ok
+                    return getSubImage(root, w_min, h_min);
                 }
             }
         }
@@ -588,6 +609,27 @@ public class PixelSheet {
 
     private BufferedImage unpackNon(BufferedImage root, Properties properties, int index, boolean isTrim) {
         if (null != root && null != properties) {
+            BufferedImage image;
+            if (getCheckStyle() == Area_Style_Shape) {
+                image = drawImage(root, properties, index);
+            } else {
+                image = subtractImage(root, properties, index);
+            }
+            if (null != image && isTrim) {
+                Rectangle rect = getTrimBounds(properties, index);
+                image = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
+            }
+            return image;
+        }
+        return null;
+    }
+
+    private BufferedImage drawImage(BufferedImage root, Properties properties, int index) {
+        return null;
+    }
+
+    private BufferedImage subtractImage(BufferedImage root, Properties properties, int index) {
+        if (null != root && null != properties) {
             ArrayList<Rectangle> arrayList = new ArrayList<>();
             for (int i = 0; i < properties.size(); i++) {
                 Rectangle rectangle = getBounds(properties, i);
@@ -597,12 +639,7 @@ public class PixelSheet {
             }
             Rectangle[] array = new Rectangle[arrayList.size()];
             arrayList.toArray(array);
-            BufferedImage image = subtractImage(root, array, index);
-            if (isTrim) {
-                Rectangle rect = getTrimBounds(properties, index);
-                image = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
-            }
-            return image;
+            return subtractImage(root, array, index);
         }
         return null;
     }
@@ -616,8 +653,11 @@ public class PixelSheet {
                 Area a = new Area(rect);
                 area.subtract(a);
             }
-//            return drawRGB(root, area, rectangle);
-            return drawImage(root, area, rectangle);
+            if (getCheckStyle() == Area_Style_RGB) {
+                return drawRGB(root, area, rectangle);
+            } else {
+                return drawImage(root, area, rectangle);
+            }
         }
         return null;
     }
