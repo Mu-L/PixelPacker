@@ -1,6 +1,7 @@
 package cn.imaginary.toolkit;
 
 import cn.imaginary.toolkit.image.PixelSheet;
+import cn.imaginary.toolkit.json.JsonArray;
 import cn.imaginary.toolkit.json.JsonObject;
 
 import javax.imageio.ImageIO;
@@ -8,10 +9,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class PixelPacker {
     public static int MaxSize = -1;
@@ -32,6 +30,7 @@ public class PixelPacker {
     public String suffix_Polygon = "polygon_";
     public String suffix_Polygon_Non = "polygon_non_";
     public String suffix_Properties = "properties_";
+    public String suffix_Shape = "shape_";
     public String suffix_Xml = ".xml";
 
     public String tag_bounds_x = PixelSheet.tag_bounds_x;
@@ -42,11 +41,11 @@ public class PixelPacker {
     public String tag_bounds_right = PixelSheet.tag_bounds_right;
     public String tag_bounds_top = PixelSheet.tag_bounds_top;
     public String tag_bounds_bottom = PixelSheet.tag_bounds_bottom;
-    public String tag_trims = "trims";
     public String tag_bounds = "bounds";
+    public String tag_trims = "trims";
     public String tag_name = "name";
-    public String tag_file = "file";
     public String tag_shape = "shape";
+    public String tag_file = "file";
 
     private PixelSheet pixelSheet = new PixelSheet();
 
@@ -104,6 +103,8 @@ public class PixelPacker {
                 Object value = prop.get(key);
                 if (value instanceof JsonObject) {
                     value = toProperties((JsonObject) value);
+                } else if (value instanceof JsonArray) {
+                    value = ((JsonArray) value).toArray();
                 }
                 properties.put(key, value);
             }
@@ -171,6 +172,10 @@ public class PixelPacker {
                     if (null != obj) {
                         p.put(tag_name, obj);
                     }
+                    obj = p_info.get(tag_shape);
+                    if (null != obj) {
+                        p.put(tag_shape, obj);
+                    }
                     if (!p.isEmpty()) {
                         prop.put(i, p);
                     }
@@ -215,6 +220,10 @@ public class PixelPacker {
                     Object obj = p.get(tag_name);
                     if (null != obj) {
                         p_info.put(tag_name, obj);
+                    }
+                    obj = p.get(tag_shape);
+                    if (null != obj) {
+                        p_info.put(tag_shape, obj);
                     }
                     if (!p_info.isEmpty()) {
                         prop.put(i, p_info);
@@ -402,31 +411,11 @@ public class PixelPacker {
     }
 
     private BufferedImage pack(File[] array, int x, int y, int width, int height, int lineSize, int rowSize, int lineWidth, int rowHeight, boolean isTrim) {
-        if (null != array) {
-            ArrayList<BufferedImage> arrayList = new ArrayList<>();
-            for (int i = 0; i < array.length; i++) {
-                BufferedImage image = read(array[i]);
-                if (null != image) {
-                    arrayList.add(image);
-                }
-            }
-            return pack(arrayList, x, y, width, height, lineSize, rowSize, lineWidth, rowHeight, isTrim);
-        }
-        return null;
+        return pack(toList(array), x, y, width, height, lineSize, rowSize, lineWidth, rowHeight, isTrim);
     }
 
     private BufferedImage pack(File[] array, Properties properties, boolean isTrim) {
-        if (null != array) {
-            ArrayList<BufferedImage> arrayList = new ArrayList<>();
-            for (int i = 0; i < array.length; i++) {
-                BufferedImage image = read(array[i]);
-                if (null != image) {
-                    arrayList.add(image);
-                }
-            }
-            return pack(arrayList, properties, isTrim);
-        }
-        return null;
+        return pack(toList(array), properties, isTrim);
     }
 
     private BufferedImage pack(ArrayList<BufferedImage> arrayList, int x, int y, int width, int height, int lineSize, int rowSize, int lineWidth, int rowHeight, boolean isTrim) {
@@ -530,17 +519,7 @@ public class PixelPacker {
     }
 
     private BufferedImage packPolygonTool(File[] array, boolean isTrim, boolean isAlpha) {
-        if (null != array) {
-            ArrayList<BufferedImage> arrayList = new ArrayList<>();
-            for (int i = 0; i < array.length; i++) {
-                BufferedImage image = read(array[i]);
-                if (null != image) {
-                    arrayList.add(image);
-                }
-            }
-            return packPolygonTool(arrayList, isTrim, isAlpha);
-        }
-        return null;
+        return packPolygonTool(toList(array), isTrim, isAlpha);
     }
 
     private BufferedImage packPolygonTool(ArrayList<BufferedImage> arrayList, boolean isTrim, boolean isAlpha) {
@@ -553,6 +532,11 @@ public class PixelPacker {
 
     private BufferedImage packPolygonNon(BufferedImage[] array, boolean isTrim) {
         return pixelSheet.packPolygonNon(array, isTrim);
+    }
+
+    public void packShape(File file, boolean isTrim) {
+        pixelSheet.setCheckStyle(PixelSheet.Area_Style_Shape);
+        packPolygonTool(file, isTrim, true);
     }
 
     public void unpack(File file, int x, int y, int width, int height, boolean isTrim) {
@@ -643,11 +627,34 @@ public class PixelPacker {
         unpack(imageFile, properties, isTrim, true);
     }
 
+    public void unpackShape(File imageFile, File propFile, boolean isTrim) {
+        unpackShape(imageFile, readProperties(propFile), isTrim);
+    }
+
+    public void unpackShape(File imageFile, Properties properties, boolean isTrim) {
+        pixelSheet.setCheckStyle(PixelSheet.Area_Style_Shape);
+//        unpack(imageFile, properties, isTrim, true);
+    }
+
     public BufferedImage[] toArray(ArrayList<BufferedImage> arrayList) {
         if (null != arrayList) {
             BufferedImage[] array = new BufferedImage[arrayList.size()];
             arrayList.toArray(array);
             return array;
+        }
+        return null;
+    }
+
+    public ArrayList<BufferedImage> toList(File[] array) {
+        if (null != array) {
+            ArrayList<BufferedImage> arrayList = new ArrayList<>();
+            for (int i = 0; i < array.length; i++) {
+                BufferedImage image = read(array[i]);
+                if (null != image) {
+                    arrayList.add(image);
+                }
+            }
+            return arrayList;
         }
         return null;
     }
